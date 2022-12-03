@@ -16,8 +16,8 @@ import bean.LinkBean
 
 class MainActivity : AppCompatActivity() {
     private var linkBean: LinkBean? = null
-    private var lAdapter: LAdapter? = null
-    private var rAdapter: RAdapter? = null
+    private var lAdapter: LAdapter? = null  //左边分类list adapter
+    private var rAdapter: RAdapter? = null  //右边餐品名称list adapter
     private var rvL: RecyclerView? = null
     private var rvR: RecyclerView? = null
     private var tvHead: TextView? = null
