@@ -55,7 +55,6 @@ abstract class BaseRecyclerViewAdapter<T>(context: Context, resLayout: Int, data
         return mData!!.size
     }
 
-
     fun setOnItemClickListener(listener: OnItemClickListener?): BaseRecyclerViewAdapter<T> {
         mOnItemClickListener = listener
         return this

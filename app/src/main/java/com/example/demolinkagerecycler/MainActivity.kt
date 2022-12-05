@@ -9,10 +9,13 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.SimpleItemAnimator
 import base.BaseRecyclerViewAdapter
 import bean.Item
 import bean.ItemL
 import bean.LinkBean
+import dialog.ShopCartDialog
+
 
 class MainActivity : AppCompatActivity() {
     private var linkBean: LinkBean? = null
@@ -38,7 +41,7 @@ class MainActivity : AppCompatActivity() {
             val itemL = ItemL("分类$i")
             listItemLS.add(itemL)
             for (j in 0 until 10) {
-                val item = Item("分类$i", "名称$j", "￥:" + (2 + i + j) * 3)
+                val item = Item("分类$i", "名称$j", (2 + i + j) * 3)
                 listItemS.add(item)
             }
         }
@@ -55,8 +58,12 @@ class MainActivity : AppCompatActivity() {
         lAdapter = LAdapter(this, R.layout.item, linkBean!!.itemLS)
         lAdapter?.bindToRecyclerView(rvL)
         rvL?.adapter = lAdapter
-        rAdapter = RAdapter(this, R.layout.item_goods, linkBean!!.itemS)
+        val shopCartDialog = ShopCartDialog(this, linkBean!!.itemS)
+        rAdapter = RAdapter(this, R.layout.item_goods, linkBean!!.itemS, shopCartDialog)
         rvR?.adapter = rAdapter
+        //关闭动画效果防止局部刷新notifyItemChanged时item闪烁
+        val sa = rvR?.itemAnimator as SimpleItemAnimator
+        sa.supportsChangeAnimations = false
     }
 
     private fun initListener() {
@@ -66,7 +73,7 @@ class MainActivity : AppCompatActivity() {
                 lAdapter?.setChecked(position)
                 val title: String = lAdapter!!.getmData()[position].title
                 for (i in 0 until rAdapter?.getmData()!!.size) {
-                    //根据左边选中的条目获取到右面此条目Title相同的位置索引；
+                    //根据左边选中的条目获取到右面此条目Title相同的位置索引
                     if (TextUtils.equals(title, rAdapter?.getmData()!![i].title)) {
                         index = i
                         moveToPosition_R(index)
@@ -82,7 +89,7 @@ class MainActivity : AppCompatActivity() {
                 val linearLayoutManager = rvR?.layoutManager as LinearLayoutManager
                 val index = linearLayoutManager.findFirstVisibleItemPosition()
                 //上滑时，不同分类的悬停标题头stick_header，上滑的分类标题stick_header只是被遮挡了，并没有GONE掉
-                tvHead?.text = rAdapter?.getmData()?.get(index)?.title
+                tvHead?.text = rAdapter?.getmData()?.get(index)?.title   //悬停标题头设置为"分类x"标题
                 lAdapter?.setToPosition(rAdapter?.getmData()?.get(index)?.title!!)
             }
         })
@@ -94,6 +101,5 @@ class MainActivity : AppCompatActivity() {
 //        val l: Int = linearLayoutManager.findLastVisibleItemPosition()
         linearLayoutManager.scrollToPositionWithOffset(index, 0)
 //        linearLayoutManager.scrollToPosition(index)
-
     }
 }
