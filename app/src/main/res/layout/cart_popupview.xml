@@ -74,7 +74,7 @@
             android:layout_width="@dimen/shopping_cart_circle_size"
             android:layout_height="@dimen/shopping_cart_circle_size"
             android:layout_alignBaseline="@+id/shopping_cart_bottom"
-            android:layout_alignParentBottom="true"
+
             android:layout_marginStart="@dimen/activity_horizontal_margin"
             android:background="@drawable/circle"
             android:clickable="true"

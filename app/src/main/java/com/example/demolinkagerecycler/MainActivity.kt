@@ -2,10 +2,15 @@ package com.example.demolinkagerecycler
 
 import adapter.LAdapter
 import adapter.RAdapter
+import android.animation.Animator
+import android.animation.ObjectAnimator
+import android.graphics.PointF
 import android.os.Bundle
 import android.text.TextUtils
 import android.view.View
-import android.widget.TextView
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -14,21 +19,25 @@ import base.BaseRecyclerViewAdapter
 import bean.Item
 import bean.ItemL
 import bean.LinkBean
-import dialog.ShopCartDialog
+import com.example.demolinkagerecycler.databinding.ActivityMainBinding
+import evaluator.PointFTypeEvaluator
+import imp.ShopCart
+import view.MoveImageView
+import view.ShopCartDialog
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), ShopCart {
     private var linkBean: LinkBean? = null
     private var lAdapter: LAdapter? = null  //左边分类list adapter
     private var rAdapter: RAdapter? = null  //右边餐品名称list adapter
-    private var rvL: RecyclerView? = null
-    private var rvR: RecyclerView? = null
-    private var tvHead: TextView? = null
+    private lateinit var shopCartDialog: ShopCartDialog
     private var index = 0
+    private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
         initData()
         initView()
         initListener()
@@ -49,27 +58,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initView() {
-        tvHead = findViewById(R.id.tv_header)
-        tvHead?.text = linkBean!!.itemLS[0].title
-        rvL = findViewById(R.id.rv1)
-        rvR = findViewById(R.id.rv2)
-        rvL?.layoutManager = LinearLayoutManager(this)
-        rvR?.layoutManager = LinearLayoutManager(this)
+        binding.layoutRightHeader.tvHeader.text = linkBean!!.itemLS[0].title
+        binding.rvLeft.layoutManager = LinearLayoutManager(this)
+        binding.rvRight.layoutManager = LinearLayoutManager(this)
         lAdapter = LAdapter(this, R.layout.item, linkBean!!.itemLS)
-        lAdapter?.bindToRecyclerView(rvL)
-        rvL?.adapter = lAdapter
-        val shopCartDialog = ShopCartDialog(this, linkBean!!.itemS)
-        rAdapter = RAdapter(this, R.layout.item_goods, linkBean!!.itemS, shopCartDialog)
-        rvR?.adapter = rAdapter
+        lAdapter?.bindToRecyclerView(binding.rvLeft)
+        binding.rvLeft.adapter = lAdapter
+        shopCartDialog = ShopCartDialog(this, linkBean!!.itemS)
+        rAdapter = RAdapter(this, R.layout.item_goods, linkBean!!.itemS, this@MainActivity)
+        binding.rvRight.adapter = rAdapter
         //关闭动画效果防止局部刷新notifyItemChanged时item闪烁
-        val sa = rvR?.itemAnimator as SimpleItemAnimator
+        val sa = binding.rvRight.itemAnimator as SimpleItemAnimator
         sa.supportsChangeAnimations = false
     }
 
     private fun initListener() {
         lAdapter?.setOnItemClickListener(object : BaseRecyclerViewAdapter.OnItemClickListener {
             override fun onItemClick(view: View?, position: Int) {
-                if (rvR?.scrollState != RecyclerView.SCROLL_STATE_IDLE) return
+                if (binding.rvRight.scrollState != RecyclerView.SCROLL_STATE_IDLE) return
                 lAdapter?.setChecked(position)
                 val title: String = lAdapter!!.getmData()[position].title
                 for (i in 0 until rAdapter?.getmData()!!.size) {
@@ -83,23 +89,107 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        rvR?.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        binding.rvRight.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                val linearLayoutManager = rvR?.layoutManager as LinearLayoutManager
+                val linearLayoutManager = binding.rvRight.layoutManager as LinearLayoutManager
                 val index = linearLayoutManager.findFirstVisibleItemPosition()
                 //上滑时，不同分类的悬停标题头stick_header，上滑的分类标题stick_header只是被遮挡了，并没有GONE掉
-                tvHead?.text = rAdapter?.getmData()?.get(index)?.title   //悬停标题头设置为"分类x"标题
+                binding.layoutRightHeader.tvHeader.text =
+                    rAdapter?.getmData()?.get(index)?.title   //悬停标题头设置为"分类x"标题
                 lAdapter?.setToPosition(rAdapter?.getmData()?.get(index)?.title!!)
             }
         })
+
+        binding.shoppingCartLayout.setOnClickListener {
+            // todo
+//            shopCartDialog.show()
+        }
     }
 
     private fun moveToPosition_R(index: Int) {
-        val linearLayoutManager = rvR?.layoutManager as LinearLayoutManager
-//        val f: Int = linearLayoutManager.findFirstVisibleItemPosition()
-//        val l: Int = linearLayoutManager.findLastVisibleItemPosition()
+        val linearLayoutManager = binding.rvRight.layoutManager as LinearLayoutManager
         linearLayoutManager.scrollToPositionWithOffset(index, 0)
-//        linearLayoutManager.scrollToPosition(index)
+    }
+
+    override fun add(view: View, position: Int) {
+        val childLocation = IntArray(2)
+        val parentLocation = IntArray(2)
+        val cartLocation = IntArray(2)
+        //1.分别获取被点击View、父布局、购物车在屏幕上的坐标xy
+        view.getLocationInWindow(childLocation)
+        binding.rvRight.getLocationInWindow(parentLocation)
+        binding.shoppingCart.getLocationInWindow(cartLocation)
+
+        //2.利用 二次贝塞尔曲线 需首先计算出 MoveImageView的2个数据点和一个控制点
+        val startP = PointF()
+        val endP = PointF()
+        val controlP = PointF()
+        //开始的数据点坐标就是 addView的坐标？
+        startP.x = (childLocation[0]).toFloat()
+        startP.y = (childLocation[1] - parentLocation[1]).toFloat()
+        //结束的数据点坐标就是 购物车的坐标
+        endP.x = (cartLocation[0]).toFloat()
+        endP.y = (cartLocation[1] - parentLocation[1]).toFloat()
+        //控制点坐标 x等于 购物车x；y等于 addView的y
+        controlP.x = endP.x
+        controlP.y = startP.y
+
+        //3.自定义曲线移动的imageView
+        val moveImageView = MoveImageView(this)
+        moveImageView.setImageResource(R.drawable.ic_add_circle_blue_700_36dp)
+        //设置img在父布局中的坐标位置
+        moveImageView.setMPointF(startP)
+        //父布局加入该imageView -不能用binding.rvRight作为root，否则会报错RecyclerView$ViewHolder.shouldIgnore()
+        binding.root.addView(moveImageView)
+        //启动属性动画
+        val objectAnimator = ObjectAnimator.ofObject(
+            moveImageView,
+            "mPointF",
+            PointFTypeEvaluator(controlP),
+            startP,
+            endP
+        )
+        objectAnimator.interpolator = AccelerateInterpolator()
+        objectAnimator.addListener(object : Animator.AnimatorListener {
+            override fun onAnimationStart(animation: Animator?) {
+                moveImageView.visibility = View.VISIBLE
+            }
+
+            override fun onAnimationEnd(animation: Animator?) {
+                //动画结束后 父布局移除 moveImageView
+                moveImageView.visibility = View.GONE
+                binding.root.removeView(moveImageView)
+                //shoppingCart 开始一个放大动画
+                val scaleAnim: Animation =
+                    AnimationUtils.loadAnimation(this@MainActivity, R.anim.cart_scale)
+                binding.shoppingCart.startAnimation(scaleAnim)
+            }
+
+            override fun onAnimationCancel(animation: Animator?) {
+            }
+
+            override fun onAnimationRepeat(animation: Animator?) {
+            }
+        })
+        //也可以在代码中创建Animator
+//        val scaleAnimatorX: ObjectAnimator =
+//            ObjectAnimator.ofFloat(binding.shoppingCart, "scaleX", 0.6f, 1.0f)
+//        val scaleAnimatorY: ObjectAnimator =
+//            ObjectAnimator.ofFloat(binding.shoppingCart, "scaleY", 0.6f, 1.0f)
+//        scaleAnimatorX.interpolator = AccelerateInterpolator()
+//        scaleAnimatorY.interpolator = AccelerateInterpolator()
+//        val animatorSet = AnimatorSet()
+//        animatorSet.play(scaleAnimatorX).with(scaleAnimatorY).after(objectAnimator)
+//        animatorSet.start()
+        objectAnimator.duration = 800
+        objectAnimator.start()
+        shopCartDialog.addToCart(position)
+        binding.tvCartTotalPrice.text = shopCartDialog.getPriceTotal().toString()
+        binding.tvCartTotalAmount.text = shopCartDialog.getTotalDishItemNum().toString()
+    }
+
+    override fun remove(view: View, position: Int) {
+        TODO("Not yet implemented")
     }
 }

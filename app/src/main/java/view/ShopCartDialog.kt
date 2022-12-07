@@ -1,4 +1,4 @@
-package dialog
+package view
 
 import adapter.PopupDishAdapter
 import android.content.Context
@@ -9,10 +9,9 @@ import bean.Item
 import com.example.demolinkagerecycler.R
 import com.example.demolinkagerecycler.databinding.CartPopupviewBinding
 import com.google.android.material.bottomsheet.BottomSheetDialog
-import imp.ShopCart
 
 
-class ShopCartDialog(context: Context, data: List<Item>) : BottomSheetDialog(context), ShopCart {
+class ShopCartDialog(context: Context, data: List<Item>) : BottomSheetDialog(context) {
 
     private var viewBinding: CartPopupviewBinding
     private var listCartItem = ArrayList<Item>()
@@ -30,29 +29,27 @@ class ShopCartDialog(context: Context, data: List<Item>) : BottomSheetDialog(con
         viewBinding.rvCart.layoutManager = LinearLayoutManager(context)
     }
 
-    override fun add(view: View, position: Int) {
+    fun addToCart(position: Int) {
         data[position].amountOrder++
         priceTotal += data[position].price
         //同一个菜品去重
         if (!listCartItem.contains(data[position])) {
             listCartItem.add(data[position])
         }
-        viewBinding.tvCartTotalPrice.text = priceTotal.toString()
-        viewBinding.tvCartTotalAmount.text = getTotalDishItemNum().toString()
         viewBinding.rvCart.adapter =
             PopupDishAdapter(context, R.layout.item_pop_dish, listCartItem)
-        this.show()
+//        this.show()
     }
 
-    override fun remove(view: View, position: Int) {
+    fun removeFromCart(view: View, position: Int) {
         if (data[position].amountOrder <= 0) return
         data[position].amountOrder--
         priceTotal -= data[position].price
         if (data[position].amountOrder <= 0) {
             listCartItem.remove(data[position])
         }
-        viewBinding.tvCartTotalPrice.text = priceTotal.toString()
-        viewBinding.tvCartTotalAmount.text = getTotalDishItemNum().toString()
+//        viewBinding.tvCartTotalPrice.text = priceTotal.toString()
+//        viewBinding.tvCartTotalAmount.text = getTotalDishItemNum().toString()
         viewBinding.rvCart.adapter =
             PopupDishAdapter(context, R.layout.item_pop_dish, listCartItem)
         this.show()
@@ -61,11 +58,15 @@ class ShopCartDialog(context: Context, data: List<Item>) : BottomSheetDialog(con
     /**
      * 购物车中菜品总数
      */
-    private fun getTotalDishItemNum(): Int {
+    fun getTotalDishItemNum(): Int {
         var sumAmount = 0
         for (item in listCartItem) {
             sumAmount += item.amountOrder
         }
         return sumAmount
+    }
+
+    fun getPriceTotal(): Int {
+        return priceTotal
     }
 }
