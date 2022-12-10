@@ -102,8 +102,10 @@ class MainActivity : AppCompatActivity(), ShopCart {
         })
 
         binding.shoppingCartLayout.setOnClickListener {
-            // todo
-//            shopCartDialog.show()
+            if (shopCartDialog.isShowing) {
+                return@setOnClickListener
+            }
+            shopCartDialog.show()
         }
     }
 
@@ -121,7 +123,7 @@ class MainActivity : AppCompatActivity(), ShopCart {
         binding.rvRight.getLocationInWindow(parentLocation)
         binding.shoppingCart.getLocationInWindow(cartLocation)
 
-        //2.利用 二次贝塞尔曲线 需首先计算出 MoveImageView的2个数据点和一个控制点
+        //2.利用二次贝塞尔曲线，需首先计算出MoveImageView的2个数据点和一个控制点
         val startP = PointF()
         val endP = PointF()
         val controlP = PointF()
@@ -157,7 +159,7 @@ class MainActivity : AppCompatActivity(), ShopCart {
             }
 
             override fun onAnimationEnd(animation: Animator?) {
-                //动画结束后 父布局移除 moveImageView
+                //动画结束后，父布局移除moveImageView
                 moveImageView.visibility = View.GONE
                 binding.root.removeView(moveImageView)
                 //shoppingCart 开始一个放大动画
@@ -185,8 +187,18 @@ class MainActivity : AppCompatActivity(), ShopCart {
         objectAnimator.duration = 800
         objectAnimator.start()
         shopCartDialog.addToCart(position)
-        binding.tvCartTotalPrice.text = shopCartDialog.getPriceTotal().toString()
-        binding.tvCartTotalAmount.text = shopCartDialog.getTotalDishItemNum().toString()
+        if (shopCartDialog.getPriceTotal() > 0) {
+            binding.tvCartTotalPrice.visibility = View.VISIBLE
+            binding.tvCartTotalPrice.text = shopCartDialog.getPriceTotal().toString()
+        } else {
+            binding.tvCartTotalPrice.visibility = View.GONE
+        }
+        if (shopCartDialog.getTotalDishItemNum() > 0) {
+            binding.tvCartTotalAmount.visibility = View.VISIBLE
+            binding.tvCartTotalAmount.text = shopCartDialog.getTotalDishItemNum().toString()
+        } else {
+            binding.tvCartTotalAmount.visibility = View.GONE
+        }
     }
 
     override fun remove(view: View, position: Int) {

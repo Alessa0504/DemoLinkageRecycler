@@ -9,6 +9,7 @@
     <dimen name="item_dish_small_word_size">18sp</dimen>
     <dimen name="item_dish_money_size">12sp</dimen>
     <dimen name="item_dish_top_margin">5dp</dimen>
+    <dimen name="item_dish_bottom_margin">10dp</dimen>
     <dimen name="item_dish_horizontal_margin">15dp</dimen>
     <dimen name="item_dish_small_horizontal_margin">2dp</dimen>
     <dimen name="item_dish_menu_hight">25dp</dimen>
