@@ -114,7 +114,49 @@ class MainActivity : AppCompatActivity(), ShopCart {
         linearLayoutManager.scrollToPositionWithOffset(index, 0)
     }
 
+    /**
+     * 菜单list添加单个菜品
+     * @param view
+     * @param position
+     */
     override fun add(view: View, position: Int) {
+        addAnimation(view)
+        shopCartDialog.addToCart(position)
+        showBottomView()
+    }
+
+    /**
+     * 菜单list删除单个菜品
+     * @param view
+     * @param position
+     */
+    override fun remove(view: View, position: Int) {
+        shopCartDialog.removeFromCart(position)
+        showBottomView()
+    }
+
+    /**
+     * 展示底部控件
+     */
+    private fun showBottomView() {
+        if (shopCartDialog.getPriceTotal() > 0) {
+            binding.tvCartTotalPrice.visibility = View.VISIBLE
+            binding.tvCartTotalPrice.text = shopCartDialog.getPriceTotal().toString()
+        } else {
+            binding.tvCartTotalPrice.visibility = View.GONE
+        }
+        if (shopCartDialog.getTotalDishItemNum() > 0) {
+            binding.tvCartTotalAmount.visibility = View.VISIBLE
+            binding.tvCartTotalAmount.text = shopCartDialog.getTotalDishItemNum().toString()
+        } else {
+            binding.tvCartTotalAmount.visibility = View.GONE
+        }
+    }
+
+    /**
+     * 点击添加菜品二次曲线动效
+     */
+    private fun addAnimation(view: View) {
         val childLocation = IntArray(2)
         val parentLocation = IntArray(2)
         val cartLocation = IntArray(2)
@@ -186,22 +228,5 @@ class MainActivity : AppCompatActivity(), ShopCart {
 //        animatorSet.start()
         objectAnimator.duration = 800
         objectAnimator.start()
-        shopCartDialog.addToCart(position)
-        if (shopCartDialog.getPriceTotal() > 0) {
-            binding.tvCartTotalPrice.visibility = View.VISIBLE
-            binding.tvCartTotalPrice.text = shopCartDialog.getPriceTotal().toString()
-        } else {
-            binding.tvCartTotalPrice.visibility = View.GONE
-        }
-        if (shopCartDialog.getTotalDishItemNum() > 0) {
-            binding.tvCartTotalAmount.visibility = View.VISIBLE
-            binding.tvCartTotalAmount.text = shopCartDialog.getTotalDishItemNum().toString()
-        } else {
-            binding.tvCartTotalAmount.visibility = View.GONE
-        }
-    }
-
-    override fun remove(view: View, position: Int) {
-        TODO("Not yet implemented")
     }
 }

@@ -6,11 +6,11 @@
         <entry key="app/src/main/res/drawable/circle.xml" value="0.2405" />
         <entry key="app/src/main/res/drawable/small_red_circle.xml" value="0.2405" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.16210739614994935" />
-        <entry key="app/src/main/res/layout/cart_popupview.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/cart_popupview.xml" value="0.335" />
         <entry key="app/src/main/res/layout/cart_popupview_1.xml" value="0.23822463768115942" />
         <entry key="app/src/main/res/layout/item.xml" value="0.22056159420289856" />
         <entry key="app/src/main/res/layout/item_goods.xml" value="0.375" />
-        <entry key="app/src/main/res/layout/item_pop_dish.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/item_pop_dish.xml" value="0.25" />
         <entry key="app/src/main/res/layout/pop_dish_item.xml" value="0.22192028985507245" />
         <entry key="app/src/main/res/layout/view_stick_head.xml" value="0.22056159420289856" />
       </map>

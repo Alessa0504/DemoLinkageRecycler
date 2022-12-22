@@ -57,7 +57,7 @@ class ShopCartDialog(context: Context, data: List<Item>) : BottomSheetDialog(con
         viewBinding.tvCartTotalAmount.text = this.getTotalDishItemNum().toString()
     }
 
-    fun removeFromCart(view: View, position: Int) {
+    fun removeFromCart(position: Int) {
         if (data[position].amountOrder <= 0) return
         data[position].amountOrder--
         priceTotal -= data[position].price
